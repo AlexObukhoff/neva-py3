@@ -1,5 +1,8 @@
+import os
+import time
 import serial
 from protocol import NevaMt3xx
+import paho.mqtt.client as mqtt
 
 # print('aaa')
 
@@ -33,10 +36,10 @@ cmd = protocol.receive()
 
 if not cmd.is_ack:
 	raise Exception('Access denied')
-# Дата: ГГММДД
+
 
 obis_str = {
-	'Date': '00.09.02*FF',
+	'Date': '00.09.02*FF',  # Дата: ГГММДД
 	'Time': '00.09.01*FF',
 	'Version': '60.01.04*FF',
 	'Address': '60.01.01*FF',
@@ -90,9 +93,25 @@ for key, value in obis_values.items():
 	else:
 		result[key] = data
 
-for key, value in result.items():
-	print(key, ':', value)
 
+def on_log(client_instance, userdata, level, buff):
+	print(buff)
+
+
+try:
+	client = mqtt.Client("P1")  # create new instance
+	# client.on_log = on_log
+	client.username_pw_set(os.getenv('MQTT_LOGIN'), os.getenv('MQTT_PASSWORD'))
+	client.connect('localhost')  # connect to broker
+	client.loop_start()  # start the loop
+	for key, value in result.items():
+		client.publish(f"neva/{key}", value)
+	time.sleep(4)  # wait
+	client.loop_stop()  # stop the loop
+except Exception as e:
+	print(e, '\n\n')
+	for key, value in result.items():
+		print(key, ':', value)
 
 # logout
 protocol.send(NevaMt3xx.NevaMt3xx.Command('B0', ''))
