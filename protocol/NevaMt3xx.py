@@ -112,7 +112,7 @@ class NevaMt3xx_com(NevaMt3xx):
 		# приём индификационного сообщения
 		buff = self.receive_line()
 		company, baudrate, device = self.get_id_message(buff)
-		print (company, device)
+		# print(company, device)
 		if self.log is not None:
 			self.log.log_rcv('Code: {}; baudrate: {}; id: {}'.format(company, baudrate, device))
 		# посылка сообщения подтверждения/выбора опций

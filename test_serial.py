@@ -11,29 +11,33 @@ from protocol import NevaMt3xx
 
 VERBOSE_LEVEL = 1
 
+
 def dump(message, level=0, datetime_stamp=False, ignore_verbose_level=False):
     if VERBOSE_LEVEL <= level and not ignore_verbose_level:
         return
     if datetime_stamp:
-        print datetime.now().isoformat()+' '+'\t'*level+message
+        print(datetime.now().isoformat()+' '+'\t'*level+message)
     else:
-        print datetime.now().strftime('%H:%M:%S.%f ')+'\t'*level+message
+        print(datetime.now().strftime('%H:%M:%S.%f ')+'\t'*level+message)
+
 
 def dump_rcv(buff, message='', level=0):
     if VERBOSE_LEVEL <= level:
         return
     if len(message) > 0:
-        print datetime.now().strftime('%H:%M:%S.%f')+'\t'*level+' >> '+message+': '+buff.decode('latin').encode('unicode_escape')
+        print(datetime.now().strftime('%H:%M:%S.%f')+'\t'*level+' >> '+message+': '+buff.decode('latin').encode('unicode_escape'))
     else:
-        print datetime.now().strftime('%H:%M:%S.%f')+'\t'*level+' >> '+buff.decode('latin').encode('unicode_escape')
+        print(datetime.now().strftime('%H:%M:%S.%f')+'\t'*level+' >> '+buff.decode('latin').encode('unicode_escape'))
+
 
 def dump_snd(buff, message='', level=0):
     if VERBOSE_LEVEL <= level:
         return
     if len(message) > 0:
-        print datetime.now().strftime('%H:%M:%S.%f')+'\t'*level+' << '+message+': '+buff.decode('latin').encode('unicode_escape')
+        print(datetime.now().strftime('%H:%M:%S.%f')+'\t'*level+' << '+message+': '+buff.decode('latin').encode('unicode_escape'))
     else:
-        print datetime.now().strftime('%H:%M:%S.%f')+'\t'*level+' << '+buff.decode('latin').encode('unicode_escape')
+        print(datetime.now().strftime('%H:%M:%S.%f')+'\t'*level+' << '+buff.decode('latin').encode('unicode_escape'))
+
 
 class log:
     def log_rcv(self, data):
@@ -41,8 +45,10 @@ class log:
     def log_snd(self, data):
         dump_snd(data)
 
+
 DEFAULT_COM_PORT = 'COM1' if sys.platform.startswith('win') else 'ttyUSB0'
 DEFAULT_PASSWORD = '00000000'
+
 
 def set_defaultencoding_globally(encoding='utf-8'):
     assert sys.getdefaultencoding() in ('ascii', 'mbcs', encoding)
@@ -50,7 +56,9 @@ def set_defaultencoding_globally(encoding='utf-8'):
     _sys_org = imp.load_dynamic('_sys_org', 'sys')
     _sys_org.setdefaultencoding(encoding)
 
+
 set_defaultencoding_globally()
+
 
 def pase_args():
     parser = argparse.ArgumentParser(description=u'Программирование счётчика электроэнергии типа НЕВА МТ 3xx.', formatter_class=argparse.RawTextHelpFormatter)
@@ -78,6 +86,7 @@ def pase_args():
             str(value)+('' if is_numeric(value) else '"'), 1)
     return args
 
+
 def connect(protocol):
     global VERBOSE_LEVEL
     dump('Connect')
@@ -85,9 +94,10 @@ def connect(protocol):
     company, device = protocol.connect()
     VERBOSE_LEVEL -= 1
     if args.id:
-        print '{}\n{}'.format(company, device)
+        print('{}\n{}'.format(company, device))
     dump('done')
     return company, device
+
 
 def login(protocol, password):
     global VERBOSE_LEVEL
@@ -102,6 +112,7 @@ def login(protocol, password):
     dump('done' if cmd.is_ack else 'FAIL')
     return cmd.is_ack
 
+
 def logout(protocol):
     dump('Logout')
     global VERBOSE_LEVEL
@@ -112,6 +123,7 @@ def logout(protocol):
     VERBOSE_LEVEL -= 1
     dump('done')
 
+
 def read_obis(protocol, obis):
     dump('OBIS '+obis)
     obis = obis.replace('.', '').replace('*', '')
@@ -120,7 +132,7 @@ def read_obis(protocol, obis):
     VERBOSE_LEVEL += 1
     protocol.send(NevaMt3xx.NevaMt3xx.Command('R1', obis+'()'))
     cmd = protocol.receive
-    print ('cmd.data=' + str(cmd.data))
+    print('cmd.data=' + str(cmd.data))
     if not cmd.is_message:
         raise Exception('OBIS {} expected'.format(obis))
     if not cmd.data.startswith(obis+'('):
@@ -128,6 +140,7 @@ def read_obis(protocol, obis):
     VERBOSE_LEVEL -= 1
     dump(cmd.data[len(obis):].strip('()'))
     return cmd.data[len(obis):].strip('()')
+
 
 def write_obis(protocol, obis, data):
     dump('OBIS '+obis+': '+data)
@@ -143,6 +156,7 @@ def write_obis(protocol, obis, data):
     VERBOSE_LEVEL -= 1
     dump(str(cmd))
 
+
 def read_half_hours(days_ago=0):
     '''
     days_ago -- 0..127
@@ -156,6 +170,7 @@ def read_half_hours(days_ago=0):
         return half_hour_energies
     else:
         raise Exception('days_ago exceeded: '+str(days_ago))
+
 
 def print_half_hours(half_hour_energies, date_stamp=datetime.now(), rows_delimiter='   '):
 
@@ -175,9 +190,9 @@ def print_half_hours(half_hour_energies, date_stamp=datetime.now(), rows_delimit
         print_lines = ['']*49 # date & 48 half hours
         for half_hour_energies2, days_ago in zip(half_hour_energies, xrange(len(half_hour_energies))):
             lines = get_day_print(half_hour_energies2, date_stamp-timedelta(days=days_ago))
-            # print 'len(print_lines)=', len(print_lines)
-            # print 'len(lines)=', len(lines)
-            # print zip(lines, xrange(0, len(lines)))
+            # print('len(print_lines)=', len(print_lines))
+            # print('len(lines)=', len(lines))
+            # print(zip(lines, xrange(0, len(lines))))
             line_max_width = max([len(x) for x in lines])
             for line, i in zip(lines, xrange(len(lines))):
                 if i == 0:
@@ -189,10 +204,11 @@ def print_half_hours(half_hour_energies, date_stamp=datetime.now(), rows_delimit
                 print_lines[i] += rows_delimiter if days_ago<len(half_hour_energies)-1 else ''
                 # print '"'+line.ljust(15)+'"'
         for line in print_lines:
-            print line
+            print(line)
     else:
         for line in get_day_print(half_hour_energies, date_stamp):
-            print line
+            print(line)
+
 
 def read_day_tariffs_energies(days_ago=0):
     '''
@@ -208,6 +224,7 @@ def read_day_tariffs_energies(days_ago=0):
     else:
         raise Exception('days_ago exceeded: '+str(days_ago))
 
+
 def read_monts(monts_ago=0):
     '''monts_ago -- 0..12'''
     if 0 <= monts_ago <= 12:
@@ -218,6 +235,7 @@ def read_monts(monts_ago=0):
         return mounts_energies
     else:
         raise Exception('monts_ago exceeded: '+str(days_ago))
+
 
 def calculate_half_hours(start=datetime.now(), stop=None, days_ago=0):
     '''returns list of list of 48 day's energies: [ [[sum, T1, T2, T3, T4]*48]*days ]'''
@@ -255,19 +273,19 @@ def calculate_half_hours(start=datetime.now(), stop=None, days_ago=0):
         '''returns list of day 48 half hours of list datetime & energies: [ [sum, T1, T2, T3, T4]*48 ]'''
         half_hours = []
         meter_date = datetime.date(datetime.strptime(read_obis(protocol, '00.09.02*FF'), '%y%m%d')) # ГГММДД
-        # print 'request_date: ', request_date, '; meter_date: ', meter_date
+        # print('request_date: ', request_date, '; meter_date: ', meter_date)
         for date_changed_tries_counter in xrange(3):
             i = (meter_date-request_date).days
             if i < 0:
                 Exception('Can\'t work at future: request date {}; meter date {}'.format(request_date, meter_date))
-            # print 'days_ago: '+str(i)
+            # print('days_ago: '+str(i))
             # get list of day tariffs enirgies, kWh: [sum, T1, T2, T3, T4]
             day_tariffs_energies = read_day_tariffs_energies(i)
             day_tariffs_energies = [long(float(e)*1000) for e in day_tariffs_energies] # kWh -> Wh
-            # print 'day_tariffs_energies = ', day_tariffs_energies
+            # print('day_tariffs_energies = ', day_tariffs_energies)
             # get list of day 48 half hour energies, W
             day_half_hours = read_half_hours(i)
-            # print 'half_hours = ', day_half_hours
+            # print('half_hours = ', day_half_hours)
             day = datetime.now().strftime('%m%d')
             tariff_index = get_year_shedule_tariff(year_tariffs_shedule, day)
             if tariff_index is not None:
@@ -289,7 +307,7 @@ def calculate_half_hours(start=datetime.now(), stop=None, days_ago=0):
                     half_hour = long(half_hour)/2
                     day_tariffs_energies[0] += half_hour # sum
                     day_tariffs_energies[tariff_index] += half_hour # Tx
-                    # print 'half_hour, tariff_index = ', half_hour, tariff_index
+                    # print('half_hour, tariff_index = ', half_hour, tariff_index)
                     half_hours.append(day_tariffs_energies[:])
             # Check whether the meter date changed
             meter_date2 = datetime.date(datetime.strptime(read_obis(protocol, '00.09.02*FF'), '%y%m%d')) # ГГММДД
@@ -304,17 +322,17 @@ def calculate_half_hours(start=datetime.now(), stop=None, days_ago=0):
     # get half hours & using it according to the tariff table
     # get list of date sorted year tariff shedule: ['MMDDTT' (TT - tariff number 1..; 7F - ordinary day)]
     year_tariffs_shedule = get_shedule_tariffs('0B.00.00*FF', 32)
-    # print 'year_tariffs_shedule = ', year_tariffs_shedule
+    # print('year_tariffs_shedule = ', year_tariffs_shedule)
     # get list of 48 (one per half hour) day tariff indexes
     day_tariff_indexes = get_day_shedule_tariffs(get_shedule_tariffs('0A.01.64*FF', 8))
-    # print 'day_tariff_indexes = ', day_tariff_indexes
+    # print('day_tariff_indexes = ', day_tariff_indexes)
     half_hours = []
     if stop is None:
         if days_ago == 0:
             stop = datetime(start.year, start.month, start.day, 23, 59, 59)
         else:
             stop = start-timedelta(days=days_ago)
-    # print 'start:', start, '; stop:', stop
+    # print('start:', start, '; stop:', stop)
     start_date = datetime.date(start)
     stop_date = datetime.date(stop)
     date = start_date
@@ -324,17 +342,17 @@ def calculate_half_hours(start=datetime.now(), stop=None, days_ago=0):
         half_hours2 = get_tariffs_half_hours(date) # [ [sum, T1, T2, T3, T4]*48 ]
         # add datetime: [ [sum, T1, T2, T3, T4]*48 ] -> [ [datetime, sum, T1, T2, T3, T4]*48 ]
         half_hours2 = [[datetime(date.year, date.month, date.day, hh_index/2, hh_index*30%60)]+hh for hh, hh_index in zip(half_hours2, xrange(len(half_hours2)))]
-        # print 'len(half_hours2): ', len(half_hours2), '; half_hours2: ', half_hours2
+        # print('len(half_hours2): ', len(half_hours2), '; half_hours2: ', half_hours2)
         if date == start_date:
             t = start-datetime(date.year, date.month, date.day)
             start_half_hour_index = t.seconds/1800 + (1 if t.seconds%1800 > 0 else 0)
-            # print 'start_half_hour_index:', start_half_hour_index, '; t.seconds: ', t.seconds
+            # print('start_half_hour_index:', start_half_hour_index, '; t.seconds: ', t.seconds)
         if date == stop_date:
             t = stop-datetime(date.year, date.month, date.day)
             stop_half_hour_index = t.seconds/1800
-            # print 'stop_half_hour_index:', stop_half_hour_index, '; t.seconds: ', t.seconds
+            # print('stop_half_hour_index:', stop_half_hour_index, '; t.seconds: ', t.seconds)
         half_hours.append(half_hours2[start_half_hour_index:stop_half_hour_index+1])
-        # print 'half_hours2: ', half_hours2[start_half_hour_index:stop_half_hour_index+1]
+        # print('half_hours2: ', half_hours2[start_half_hour_index:stop_half_hour_index+1])
         date -= timedelta(days=1)
     return half_hours
 
@@ -368,7 +386,7 @@ try:
 
     if args.obis is not None:
         for obis in args.obis:
-            print read_obis(protocol, obis)
+            print(read_obis(protocol, obis))
 
     # buff = read_obis(protocol, '00.09.02*FF') # Дата: ГГММДД
     # buff = read_obis(protocol, '60.01.01*FF') # Адрес счетчика: XXXXXXXX
@@ -395,15 +413,15 @@ try:
             else:
                 stop = start-timedelta(days=args.calc_half_hours)
             stop = datetime(stop.year, stop.month, stop.day, 23, 59, 59)
-            # print 'start: ', start, 'stop: ', stop
+            # print('start: ', start, 'stop: ', stop)
             half_hours = calculate_half_hours(start=start, stop=stop)
-            # print 'half_hours: ', half_hours
+            # print('half_hours: ', half_hours)
             for half_hour, half_hour_index in zip(half_hours, xrange(len(half_hours))):
                 hh = 30*(half_hour_index%48) # day minutes: 0..1410 = 00:00..23:30
                 hh = '{:02}:{:02}'.format(hh/60, hh%60)
             # add missing half hours into the list for correct print
             half_hours[0] = ['']*(48-len(half_hours[0]))+half_hours[0]
-            # print half_hours[0]
+            # print(half_hours[0])
             print_half_hours(half_hours, rows_delimiter=' | ')
         else:
             raise Exception('calc-half-hours not in range 0..127: '+str(args.calc_half_hours))
@@ -411,7 +429,7 @@ try:
     # write_obis(protocol, '60.01.01*FF', '00009144') # Адрес счетчика: XXXXXXXX
     logout(protocol)
 except Exception as e:
-    print u'ERROR: '+str(e)
+    print(u'ERROR: '+str(e))
     exc_type, exc_value, exc_traceback = sys.exc_info()
     traceback.print_tb(exc_traceback, file=sys.stderr)
     sys.exit(-1)
